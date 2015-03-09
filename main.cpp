@@ -3,11 +3,14 @@
 #include <chrono>
 #include <functional>
 #include <thread>
+#include <cmath>
 using namespace std;
 
 #include <dirent.h>
 
 #include <stdlib.h>
+
+#define PI 3.14159265358979323846264338327950288419716939937510
 
 
 
@@ -121,9 +124,17 @@ int main(int argc, char const *argv[])
 	pwmSetPolarity(pwm, 0);
 
 
-	pwmSetDutyFunction(pwm, [](float dur){
-		return 0.0;
-	}, 2, 20000000);
+
+		// Function parameters
+		auto dur = 2.0;
+		auto start = 30;
+		auto end = 90;
+		// END parameters
+	pwmSetDutyFunction(pwm, [&](float t){
+
+		auto deplacement = end - start ;
+		return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
+	}, dur, 20000000);
 
 
 	return 0;
