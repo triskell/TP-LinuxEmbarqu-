@@ -113,6 +113,15 @@ void pwmSetDutyFunction(Pwm& pwm, function<double(double)> f, float durationSec,
 //===============================================================
 // Main
 
+void cmd_servo_hard_progressive(Pwm& pwm, float angle_debut, float angle_fin, float duree_du_deplacement){
+
+	pwmSetDutyFunction(pwm, [&](float t){
+
+		auto deplacement = angle_fin - angle_debut ;
+		return (1 - cos(t * (PI / 2.0) / duree_du_deplacement)) * deplacement + angle_debut;
+	}, duree_du_deplacement, 20000000);
+}
+
 
 int main(int argc, char const *argv[])
 {
@@ -124,11 +133,12 @@ int main(int argc, char const *argv[])
 
 
 
-		// Function parameters
-		auto dur = 2.0;
-		auto start = 30;
-		auto end = 90;
-		// END parameters
+	// Function parameters
+	auto dur = 2.0;
+	auto start = 30;
+	auto end = 90;
+	// END parameters
+
 	pwmSetDutyFunction(pwm, [&](float t){
 
 		auto deplacement = end - start ;
