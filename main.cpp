@@ -80,6 +80,11 @@ void pwmSetDuty(Pwm& pwm, long dutyNS){
 }
 
 
+void pwmSetAngle(Pwm& pwm, float angleDeg){
+	pwmSetDuty(pwm, ((angleDeg/90.0) + 1.5) * 1000000);
+}
+
+
 
 
 
