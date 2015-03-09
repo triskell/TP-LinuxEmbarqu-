@@ -121,6 +121,10 @@ int main(int argc, char const *argv[])
 	pwmSetPolarity(pwm, 0);
 
 
+	pwmSetDutyFunction(pwm, [](float dur){
+		return 0.0;
+	}, 2, 20000000);
+
 
 	return 0;
 }
