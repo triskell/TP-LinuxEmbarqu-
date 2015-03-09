@@ -1,5 +1,8 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <functional>
+#include <thread>
 using namespace std;
 
 #include <dirent.h>
@@ -11,7 +14,7 @@ using namespace std;
 //===============================================================
 // Tools
 
-std::string FindDirContaining(const std::string& sParent, const std::string& sName){
+string FindDirContaining(const string& sParent, const string& sName){
 	DIR* dir = opendir(sParent.c_str());
 	if(dir==nullptr)
 		return "";
@@ -85,7 +88,23 @@ void pwmSetAngle(Pwm& pwm, float angleDeg){
 }
 
 
+// f(float seconds){return angleDeg;}
+void pwmSetDutyFunction(Pwm& pwm, function<double(double)> f, float durationSec, long periodUS){
 
+	auto start = chrono::system_clock::now();
+	auto duration = chrono::microseconds((int)(durationSec*1000000));
+	auto period = chrono::microseconds(periodUS);
+
+	chrono::duration<double> elapsedTime;
+	auto lastLoop = chrono::system_clock::now();
+	do{
+		elapsedTime=chrono::system_clock::now()-start;
+		pwmSetAngle(pwm, f(chrono::duration_cast<chrono::microseconds>(elapsedTime).count()/1000000.0));
+
+		this_thread::sleep_for(chrono::system_clock::now()-lastLoop);
+		lastLoop = chrono::system_clock::now();
+	}while(elapsedTime<duration);
+}
 
 
 
