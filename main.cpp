@@ -40,7 +40,7 @@ string FindDirContaining(const string& sParent, const string& sName){
 #define PWM2A "P8_19"
 #define PWM2B "P8_13"
 struct Pwm{
-	ofstream files[4];
+	ofstream files[3];
 };
 
 
@@ -63,7 +63,6 @@ void pwmInit(const string& pin, Pwm* pwm){
 	pwm->files[0].open(string(pinPath+"/polarity"), ios_base::out);
 	pwm->files[1].open(string(pinPath+"/period"), ios_base::out);
 	pwm->files[2].open(string(pinPath+"/duty"), ios_base::out);
-	pwm->files[3].open(string(pinPath+"/run"), ios_base::out);
 
 	if(pwm->files[0].is_open()
 	  +pwm->files[1].is_open()
