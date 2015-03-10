@@ -59,6 +59,7 @@ void pwmSetAngle(float angleDeg){
 // f(float seconds){return angleDeg;}
 void pwmSetDutyFunction(function<double(double)> f, float durationSec, long periodUS){
 
+<<<<<<< HEAD
 	auto start = clock();
 	auto duration = durationSec*1000000;
 	auto period = periodUS;
@@ -67,11 +68,26 @@ void pwmSetDutyFunction(function<double(double)> f, float durationSec, long peri
 	auto lastLoop = clock();
 	do{
 		elapsedTime = (clock()-start) * 1000000 / CLOCKS_PER_SEC;
-		pwmSetAngle(f(elapsedTime/1000000.0));
+		pwmSetAngle(pwm, elapsedTime/1000000.0);
 
 		usleep( (clock()-lastLoop) * 1000000 / CLOCKS_PER_SEC );
 		lastLoop = clock();
 	}while(elapsedTime<duration);
+=======
+	// auto start = chrono::system_clock::now();
+	// auto duration = chrono::microseconds((int)(durationSec*1000000));
+	// auto period = chrono::microseconds(periodUS);
+
+	// chrono::duration<double> elapsedTime;
+	// auto lastLoop = chrono::system_clock::now();
+	// do{
+	// 	elapsedTime=chrono::system_clock::now()-start;
+	// 	pwmSetAngle(f(chrono::duration_cast<chrono::microseconds>(elapsedTime).count()/1000000.0));
+
+	// 	// this_thread::sleep_for(chrono::system_clock::now()-lastLoop);
+	// 	lastLoop = chrono::system_clock::now();
+	// }while(elapsedTime<duration);
+>>>>>>> c8b91fa25dadf09522d007953313bc03795ec07d
 }
 
 
@@ -99,15 +115,17 @@ int main(int argc, char const *argv[])
 
 
 	// // Function parameters
-	auto dur = 2.0;
-	auto start = 30;
-	auto end = 90;
+	// auto dur = 2.0;
+	// auto start = 30;
+	// auto end = 90;
 	// // END parameters
 
-	pwmSetDutyFunction([&](float t){
-		auto deplacement = end - start ;
-		return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
-	}, dur, 20000000);
+	// pwmSetDutyFunction([&](float t){
 
+	// 	auto deplacement = end - start ;
+	// 	return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
+	// }, dur, 20000000);
+
+	cout<<"Yolooooo"<<endl;
 	return 0;
 }
