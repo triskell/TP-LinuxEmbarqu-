@@ -94,7 +94,7 @@ void cmd_servo_hard_progressive(float angle_debut, float angle_fin, float duree_
 	// Here, intergated Sin function (speed) => 1-Cos function (position)
 	pwmSetDutyFunction([&](float t){
 		auto deplacement = angle_fin - angle_debut ;
-		return (1 - cos(t * (PI / 2.0) / duree_du_deplacement)) * deplacement + angle_debut;
+		return (1 - cos(t * PI / duree_du_deplacement)) * deplacement + angle_debut;
 	}, duree_du_deplacement, 20000000);
 }
 
