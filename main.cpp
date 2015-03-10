@@ -24,8 +24,9 @@ ofstream pwmFiles[3];
 void pwmInit(){
 
 	//Activate pwm on pin
-	system((string("echo bone_pwm_")+PWM+" > /sys/devices/bone_capemgr.9/slots").c_str());
-	string pinPath = string("/sys/devices/ocp.3/pwm_test_")+PWM;
+	system("echo am33xx_pwm > /sys/devices/bone_capemgr.9/slots");
+	system("echo bone_pwm_P9_14 > /sys/devices/bone_capemgr.9/slots");
+	string pinPath = "/sys/devices/ocp.3/pwm_test_P9_14.15";
 
 	pwmFiles[0].open(string(pinPath+"/polarity"), ios_base::out);
 	pwmFiles[1].open(string(pinPath+"/period"), ios_base::out);
@@ -34,15 +35,15 @@ void pwmInit(){
 	if(pwmFiles[0].is_open()
 	  +pwmFiles[1].is_open()
 	  +pwmFiles[2].is_open()<3)
-		cout<<"Error: Some PWM files could not be opened (pinpath="<<pinPath<<")"<<endl;
+		cout<<"Error: Some PWM files could not be opened (pinpath="<<pinPath<<"): "<<pwmFiles[0].is_open()<<"|"<<pwmFiles[1].is_open()<<"|"<<pwmFiles[2].is_open()<<endl;
 }
 
 void pwmSetPolarity(bool polarity){
 	pwmFiles[0]<<(int)polarity;
 	pwmFiles[0].flush();
 }
-void pwmSetPeriod(long periodNS){
-	pwmFiles[1]<<periodNS;
+void pwmSetPeriod(long periodUS){
+	pwmFiles[1]<<periodUS*1000.0;
 	pwmFiles[1].flush();
 }
 void pwmSetDuty(long dutyNS){
@@ -59,19 +60,22 @@ void pwmSetAngle(float angleDeg){
 // f(float seconds){return angleDeg;}
 void pwmSetDutyFunction(function<double(double)> f, float durationSec, long periodUS){
 
-	auto start = clock();
-	auto duration = durationSec*1000000;
-	auto period = periodUS;
+	clock_t start = clock();
+	clock_t duration = durationSec*CLOCKS_PER_SEC;
+	clock_t period = periodUS*(float)CLOCKS_PER_SEC/1000000.0;
 
-	float elapsedTime;
-	auto lastLoop = clock();
+	clock_t elapsedTicks;
 	do{
-		elapsedTime = (clock()-start) * 1000000 / CLOCKS_PER_SEC;
-		pwmSetAngle(f(elapsedTime/1000000.0));
+		clock_t lastLoop = clock();
 
-		usleep( (clock()-lastLoop) * 1000000 / CLOCKS_PER_SEC );
-		lastLoop = clock();
-	}while(elapsedTime<duration);
+		elapsedTicks = clock()-start;
+		pwmSetAngle(f((float)elapsedTicks/(float)CLOCKS_PER_SEC));
+		// cout<<elapsedTicks/(float)CLOCKS_PER_SEC<<":"<<f((float)elapsedTicks/(float)CLOCKS_PER_SEC)<<endl;
+
+		auto fromLastLoop = clock()-lastLoop;
+		usleep( (period-fromLastLoop) / (float)CLOCKS_PER_SEC / 1000000.0 );
+
+	}while(elapsedTicks<duration);
 }
 
 
@@ -93,21 +97,19 @@ int main(int argc, char const *argv[])
 {
 	pwmInit();
 
-	pwmSetPeriod(20000000);
+	pwmSetPeriod(20000);
 	pwmSetPolarity(0);
 
-
-
 	// // Function parameters
-	auto dur = 2.0;
-	auto start = 30;
-	auto end = 90;
+	auto dur = 1.0;
+	auto start = -40;
+	auto end = 40;
 	// // END parameters
 
 	pwmSetDutyFunction([&](float t){
 		auto deplacement = end - start ;
 		return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
-	}, dur, 20000000);
+	}, dur, 20000);
 
 	return 0;
 }
