@@ -24,9 +24,11 @@ ofstream pwmFiles[3];
 void pwmInit(){
 
 	//Activate pwm on pin
-	system("echo am33xx_pwm > /sys/devices/bone_capemgr.9/slots");
+	// system("echo am33xx_pwm > /sys/devices/bone_capemgr.9/slots");
 	system("echo bone_pwm_P9_14 > /sys/devices/bone_capemgr.9/slots");
 	string pinPath = "/sys/devices/ocp.3/pwm_test_P9_14.15";
+
+	usleep(10000);
 
 	pwmFiles[0].open(string(pinPath+"/polarity"), ios_base::out);
 	pwmFiles[1].open(string(pinPath+"/period"), ios_base::out);
@@ -70,7 +72,7 @@ void pwmSetDutyFunction(function<double(double)> f, float durationSec, long peri
 
 		elapsedTicks = clock()-start;
 		pwmSetAngle(f((float)elapsedTicks/(float)CLOCKS_PER_SEC));
-		// cout<<elapsedTicks/(float)CLOCKS_PER_SEC<<":"<<f((float)elapsedTicks/(float)CLOCKS_PER_SEC)<<endl;
+		//cout<<elapsedTicks/(float)CLOCKS_PER_SEC<<":"<<f((float)elapsedTicks/(float)CLOCKS_PER_SEC)<<endl;
 
 		auto fromLastLoop = clock()-lastLoop;
 		usleep( (period-fromLastLoop) / (float)CLOCKS_PER_SEC / 1000000.0 );
@@ -102,14 +104,23 @@ int main(int argc, char const *argv[])
 
 	// // Function parameters
 	auto dur = 1.0;
-	auto start = -40;
-	auto end = 40;
+	auto start = -45;
+	auto end = 45;
 	// // END parameters
 
-	pwmSetDutyFunction([&](float t){
-		auto deplacement = end - start ;
-		return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
-	}, dur, 20000);
+	while(1){
+
+		pwmSetDutyFunction([&](float t){
+			auto deplacement = end - start ;
+			return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
+		}, dur, 2000000);
+
+
+		pwmSetDutyFunction([&](float t){
+			auto deplacement = start - end ;
+			return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + end;
+		}, dur, 2000000);
+	}
 
 	return 0;
 }
