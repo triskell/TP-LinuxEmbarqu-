@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
-#include <chrono>
 #include <functional>
 #include <thread>
 #include <cmath>
+#include <ctime>
 using namespace std;
 
 #include <dirent.h>
+#include <unistd.h>
 
 #include <stdlib.h>
 
@@ -93,18 +94,18 @@ void pwmSetAngle(Pwm& pwm, float angleDeg){
 // f(float seconds){return angleDeg;}
 void pwmSetDutyFunction(Pwm& pwm, function<double(double)> f, float durationSec, long periodUS){
 
-	auto start = chrono::system_clock::now();
-	auto duration = chrono::microseconds((int)(durationSec*1000000));
-	auto period = chrono::microseconds(periodUS);
+	auto start = clock();
+	auto duration = durationSec*1000000;
+	auto period = periodUS;
 
-	chrono::duration<double> elapsedTime;
-	auto lastLoop = chrono::system_clock::now();
+	float elapsedTime;
+	auto lastLoop = clock();
 	do{
-		elapsedTime=chrono::system_clock::now()-start;
-		pwmSetAngle(pwm, f(chrono::duration_cast<chrono::microseconds>(elapsedTime).count()/1000000.0));
+		elapsedTime = (clock()-start) * 1000000 / CLOCKS_PER_SEC;
+		pwmSetAngle(pwm, elapsedTime/1000000.0);
 
-		this_thread::sleep_for(chrono::system_clock::now()-lastLoop);
-		lastLoop = chrono::system_clock::now();
+		usleep( (clock()-lastLoop) * 1000000 / CLOCKS_PER_SEC );
+		lastLoop = clock();
 	}while(elapsedTime<duration);
 }
 
