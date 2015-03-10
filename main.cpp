@@ -20,16 +20,19 @@ ofstream pwmFiles[3];
 // PWM
 
 
-
 void pwmInit(){
 
-	//Activate pwm on pin
+	// Activate pwm on pin
+	// Only activate slot once after device boot
+	// -> Comment line below for further launches.
 	// system("echo am33xx_pwm > /sys/devices/bone_capemgr.9/slots");
 	system("echo bone_pwm_P9_14 > /sys/devices/bone_capemgr.9/slots");
 	string pinPath = "/sys/devices/ocp.3/pwm_test_P9_14.15";
 
+	// Wait previous command to finish
 	usleep(10000);
 
+	// Open PWM drivers registers
 	pwmFiles[0].open(string(pinPath+"/polarity"), ios_base::out);
 	pwmFiles[1].open(string(pinPath+"/period"), ios_base::out);
 	pwmFiles[2].open(string(pinPath+"/duty"), ios_base::out);
@@ -53,7 +56,7 @@ void pwmSetDuty(long dutyNS){
 	pwmFiles[2].flush();
 }
 
-
+// Set PWM angle (not progressive)
 void pwmSetAngle(float angleDeg){
 	pwmSetDuty(((angleDeg/90.0) + 1.5) * 1000000);
 }
@@ -71,11 +74,11 @@ void pwmSetDutyFunction(function<double(double)> f, float durationSec, long peri
 		clock_t lastLoop = clock();
 
 		elapsedTicks = clock()-start;
-		pwmSetAngle(f((float)elapsedTicks/(float)CLOCKS_PER_SEC));
+		pwmSetAngle(f((float)elapsedTicks/(float)CLOCKS_PER_SEC)); // Set angle propotional (according to f lambda) to the elapsed time since last movement
 		//cout<<elapsedTicks/(float)CLOCKS_PER_SEC<<":"<<f((float)elapsedTicks/(float)CLOCKS_PER_SEC)<<endl;
 
-		auto fromLastLoop = clock()-lastLoop;
-		usleep( (period-fromLastLoop) / (float)CLOCKS_PER_SEC / 1000000.0 );
+		auto fromLastLoop = clock()-lastLoop; // Loop time
+		usleep( (period-fromLastLoop) / (float)CLOCKS_PER_SEC / 1000000.0 ); // Sleep remaining time (loop_measured_time - loop_theorical_period)
 
 	}while(elapsedTicks<duration);
 }
@@ -87,8 +90,9 @@ void pwmSetDutyFunction(function<double(double)> f, float durationSec, long peri
 
 void cmd_servo_hard_progressive(float angle_debut, float angle_fin, float duree_du_deplacement){
 
+	// Use of Lambda function to pass the kind of movement to do
+	// Here, intergated Sin function (speed) => 1-Cos function (position)
 	pwmSetDutyFunction([&](float t){
-
 		auto deplacement = angle_fin - angle_debut ;
 		return (1 - cos(t * (PI / 2.0) / duree_du_deplacement)) * deplacement + angle_debut;
 	}, duree_du_deplacement, 20000000);
@@ -99,23 +103,27 @@ int main(int argc, char const *argv[])
 {
 	pwmInit();
 
+	// Set PWM drivers parameters
 	pwmSetPeriod(20000);
 	pwmSetPolarity(0);
 
-	// // Function parameters
-	auto dur = 1.0;
+	// Movement function parameters
+	auto dur = 1.0;	// in seconds
 	auto start = -45;
 	auto end = 45;
-	// // END parameters
+	// END movement parameters
 
+	// Continuous movement
 	while(1){
 
+		// move forward
 		pwmSetDutyFunction([&](float t){
 			auto deplacement = end - start ;
 			return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + start;
 		}, dur, 2000000);
 
 
+		// Move back
 		pwmSetDutyFunction([&](float t){
 			auto deplacement = start - end ;
 			return (1 - cos(t * (PI / 2.0) / dur)) * deplacement + end;
