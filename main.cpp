@@ -83,18 +83,36 @@ void pwmSetDutyFunction(function<double(double)> f, float durationSec, long peri
 	}while(elapsedTicks<duration);
 }
 
+//===============================================================
+// Movement formulas
+
+// Integrate(sin(x)) = -cos(x) (integrate speed => position)
+float sinSimple(float t, float angle_debut, float angle_fin, float duree_du_deplacement){
+	auto deplacement = angle_fin - angle_debut ;
+	return (1 - cos(t * PI / duree_du_deplacement)) * deplacement + angle_debut;
+}
+
+// Integrate(sin^2(x)) = 	-sin(2·x)/4 - x/2 (integrate speed => position)
+float sinSquare(float t, float angle_debut, float angle_fin, float duree_du_deplacement){
+	auto deplacement = angle_fin - angle_debut ;
+	return ( ( 1 - sin( 4 * t * PI / duree_du_deplacement)) / 4 - t / 2 ) * deplacement + angle_debut;
+}
+
 
 
 //===============================================================
 // Main
 
-void cmd_servo_hard_progressive(float angle_debut, float angle_fin, float duree_du_deplacement){
+void cmd_servo_hard_progressive(float angle_debut, float angle_fin, float duree_du_deplacement, int Mode){
 
 	// Use of Lambda function to pass the kind of movement to do
-	// Here, intergated Sin function (speed) => 1-Cos function (position)
 	pwmSetDutyFunction([&](float t){
-		auto deplacement = angle_fin - angle_debut ;
-		return (1 - cos(t * PI / duree_du_deplacement)) * deplacement + angle_debut;
+		if(Mode == 1){
+			return sinSquare(t, angle_debut, angle_fin, duree_du_deplacement);
+		}
+		else {
+			return sinSimple(t, angle_debut, angle_fin, duree_du_deplacement);
+		}
 	}, duree_du_deplacement, 20000000);
 }
 
@@ -111,6 +129,7 @@ int main(int argc, char const *argv[])
 	auto dur = 1.0;	// in seconds
 	auto start = -45;
 	auto end = 45;
+	auto mode = 1;
 	// END movement parameters
 
 	// Continuous movement
